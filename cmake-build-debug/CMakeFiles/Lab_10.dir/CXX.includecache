@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/Lenovo/Desktop/Lab 10/main.cpp
+iostream
+-
+vector
+-
+set
+-
+sstream
+-
+fstream
+-
+limits
+-
+cassert
+-
+
