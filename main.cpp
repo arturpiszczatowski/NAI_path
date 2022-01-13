@@ -4,6 +4,8 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <set>
+#include <algorithm>
 
 
 using namespace std;
@@ -100,14 +102,85 @@ void loadAndGenerateGraphviz(string fileName){
     generateGraph(inputGraph, output);
 }
 
+vector<int> dijkstra(graph g, int initial_node){
 
+    int e = INF;
+
+    vector<int> visited_nodes;
+    vector<int> available_nodes;
+    vector<int> uncharted_nodes;
+
+    int total_distance = 0;
+
+    for(int i=0; i<g.size(); i++){
+        uncharted_nodes.push_back(i);
+    }
+
+    visited_nodes.push_back(initial_node);
+    uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), initial_node), uncharted_nodes.end());
+
+    while(!uncharted_nodes.empty()){
+
+        available_nodes.erase(available_nodes.begin(), available_nodes.end());
+
+        //0
+        //0 1 e e 1
+        for(int i=0; i<g[0].size(); i++){
+            if(g[initial_node][i] != e && g[initial_node][i] >= 1 && (find(visited_nodes.begin(), visited_nodes.end(), i)==visited_nodes.end())){
+                available_nodes.push_back(i);
+                cout << "DODALEM " << i << endl;
+            }
+        }
+        cout << "NEXT" << endl;
+
+        int closest_node_distance = e;
+        int closest_node;
+
+
+        //1 4
+        for(int possible_closest_node : available_nodes){
+            if(g[initial_node][possible_closest_node] < closest_node_distance){
+                closest_node_distance = g[initial_node][possible_closest_node];
+                closest_node = possible_closest_node;
+
+                cout << "NAJBLIZSZY NODE: " << possible_closest_node << endl;
+            }
+        }
+
+
+        total_distance += closest_node_distance;
+        initial_node = closest_node;
+        visited_nodes.push_back(closest_node);
+        uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), closest_node), uncharted_nodes.end());
+
+        for(int un : uncharted_nodes){
+            cout << "UNCHARTED : " << un << endl;
+        }
+
+    }
+
+    return visited_nodes;
+
+}
 
 
 int main(int argc, char **argv) {
 
     int e = INF;
 
-    loadAndGenerateGraphviz(argv[1]);
+    graph g = {
+            {0, 1, e, e, 1},
+            {1, 0, 3, 1, e},
+            {e, 3, 0, 1, e},
+            {e, 1, 1, 0, 1},
+            {1, e, e, 1, 0}};
+
+    vector<int> visited_nodes = dijkstra(g, 0);
+
+    for(int node : visited_nodes) {
+        cout << node << endl;
+    }
+
 
     return 0;
 }
