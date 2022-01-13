@@ -128,10 +128,8 @@ vector<int> dijkstra(graph g, int initial_node){
         for(int i=0; i<g[0].size(); i++){
             if(g[initial_node][i] != e && g[initial_node][i] >= 1 && (find(visited_nodes.begin(), visited_nodes.end(), i)==visited_nodes.end())){
                 available_nodes.push_back(i);
-                cout << "DODALEM " << i << endl;
             }
         }
-        cout << "NEXT" << endl;
 
         int closest_node_distance = e;
         int closest_node;
@@ -139,11 +137,25 @@ vector<int> dijkstra(graph g, int initial_node){
 
         //1 4
         for(int possible_closest_node : available_nodes){
-            if(g[initial_node][possible_closest_node] < closest_node_distance){
+            if(g[initial_node][possible_closest_node] <= closest_node_distance){
                 closest_node_distance = g[initial_node][possible_closest_node];
                 closest_node = possible_closest_node;
 
-                cout << "NAJBLIZSZY NODE: " << possible_closest_node << endl;
+                int number_of_future_paths = g.size();
+                for(int p=0; p<g.size(); p++){
+                    if(g[possible_closest_node][p] == e){
+                        number_of_future_paths--;
+                    }
+                    for(int visited : visited_nodes){
+                        if(visited == p){
+                            number_of_future_paths--;
+                        }
+                    }
+                }
+
+                if(number_of_future_paths <= 1){
+                    break;
+                }
             }
         }
 
@@ -152,13 +164,9 @@ vector<int> dijkstra(graph g, int initial_node){
         initial_node = closest_node;
         visited_nodes.push_back(closest_node);
         uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), closest_node), uncharted_nodes.end());
-
-        for(int un : uncharted_nodes){
-            cout << "UNCHARTED : " << un << endl;
-        }
-
     }
 
+    cout << "Total distance: " << total_distance << endl;
     return visited_nodes;
 
 }
