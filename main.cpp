@@ -6,6 +6,7 @@
 #include <sstream>
 #include <set>
 #include <algorithm>
+#include <list>
 
 
 using namespace std;
@@ -13,6 +14,7 @@ using namespace std;
 #define INF ((int)(1 << (8 * sizeof(int) - 3)))
 
 using graph = vector<vector<int>>;
+using road_with_score = pair<vector<int>, int>;
 
 graph loadGraph(string fileName)
 {
@@ -102,13 +104,17 @@ void loadAndGenerateGraphviz(string fileName){
     generateGraph(inputGraph, output);
 }
 
-vector<int> dijkstra(graph g, int initial_node){
+road_with_score dijkstra(graph g, int initial_node, int final_node){
 
     int e = INF;
 
     vector<int> visited_nodes;
     vector<int> available_nodes;
     vector<int> uncharted_nodes;
+
+    list<road_with_score> all_roads;
+    road_with_score current_road;
+    road_with_score best_road;
 
     int total_distance = 0;
 
@@ -119,9 +125,10 @@ vector<int> dijkstra(graph g, int initial_node){
     visited_nodes.push_back(initial_node);
     uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), initial_node), uncharted_nodes.end());
 
-    while(!uncharted_nodes.empty()){
+    while(!uncharted_nodes.empty() && (find(all_roads.begin(), all_roads.end(), current_road) == all_roads.end())){
 
-        available_nodes.erase(available_nodes.begin(), available_nodes.end());
+//        available_nodes.erase(available_nodes.begin(), available_nodes.end());
+
 
         //0
         //0 1 e e 1
@@ -130,6 +137,22 @@ vector<int> dijkstra(graph g, int initial_node){
                 available_nodes.push_back(i);
             }
         }
+
+        vector<vector<int>> every_road;
+
+        do {
+            vector<int> current_road;
+            for (int available_node: available_nodes) {
+                int current_node = available_node;
+                for (int i = 0; i < g[0].size(); i++) {
+                    if (g[current_node][i] != e && g[current_node][i] >= 1 &&
+                        (find(visited_nodes.begin(), visited_nodes.end(), i) == visited_nodes.end())) {
+                        available_nodes.push_back(i);
+                    }
+                }
+            }
+            every_road.push_back(current_road);
+        }while()
 
         int closest_node_distance = e;
         int closest_node;
@@ -141,20 +164,18 @@ vector<int> dijkstra(graph g, int initial_node){
                 closest_node_distance = g[initial_node][possible_closest_node];
                 closest_node = possible_closest_node;
 
-                int number_of_future_paths = g.size();
-                for(int p=0; p<g.size(); p++){
-                    if(g[possible_closest_node][p] == e){
-                        number_of_future_paths--;
-                    }
-                    for(int visited : visited_nodes){
-                        if(visited == p){
-                            number_of_future_paths--;
+                vector<int> discovered_road = {initial_node, possible_closest_node};
+
+                if(possible_closest_node != final_node){
+                    vector<int> future_available_nodes;
+                    for(int j=0; j<g[0].size(); j++){
+                        if(g[possible_closest_node][j] != e && g[possible_closest_node][j] >= 1 && (find(visited_nodes.begin(), visited_nodes.end(), j)==visited_nodes.end())){
+                            future_available_nodes.push_back(j);
+                        }
+                        if(!(find(future_available_nodes.begin(), future_available_nodes.end(), final_node)==future_available_nodes.end())){
+
                         }
                     }
-                }
-
-                if(number_of_future_paths <= 1){
-                    break;
                 }
             }
         }
@@ -165,9 +186,7 @@ vector<int> dijkstra(graph g, int initial_node){
         visited_nodes.push_back(closest_node);
         uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), closest_node), uncharted_nodes.end());
     }
-
-    cout << "Total distance: " << total_distance << endl;
-    return visited_nodes;
+    return best_road;
 
 }
 
@@ -176,6 +195,8 @@ int main(int argc, char **argv) {
 
     int e = INF;
 
+//    loadAndGenerateGraphviz(argv[1]);
+
     graph g = {
             {0, 1, e, e, 1},
             {1, 0, 3, 1, e},
@@ -183,11 +204,15 @@ int main(int argc, char **argv) {
             {e, 1, 1, 0, 1},
             {1, e, e, 1, 0}};
 
-    vector<int> visited_nodes = dijkstra(g, 0);
 
-    for(int node : visited_nodes) {
-        cout << node << endl;
+    road_with_score best = dijkstra(g, 1, 2);
+
+    cout << "Road: {";
+    for(int node : best.first) {
+        cout << node << " ";
     }
+    cout << "}" << endl;
+    cout << "Cost:" << best.second;
 
 
     return 0;
