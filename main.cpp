@@ -104,88 +104,88 @@ void loadAndGenerateGraphviz(string fileName){
     generateGraph(inputGraph, output);
 }
 
-road_with_score dijkstra(graph g, int initial_node, int final_node){
+road_with_score dijkstra(graph g, int given_initial_node, int given_final_node){
 
     int e = INF;
 
-    vector<int> visited_nodes;
-    vector<int> available_nodes;
+
     vector<int> uncharted_nodes;
 
     list<road_with_score> all_roads;
     road_with_score current_road;
     road_with_score best_road;
 
-    int total_distance = 0;
+    vector<pair<int, vector<int>>> every_node_connections;
 
-    for(int i=0; i<g.size(); i++){
-        uncharted_nodes.push_back(i);
-    }
-
-    visited_nodes.push_back(initial_node);
-    uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), initial_node), uncharted_nodes.end());
-
-    while(!uncharted_nodes.empty() && (find(all_roads.begin(), all_roads.end(), current_road) == all_roads.end())){
-
-//        available_nodes.erase(available_nodes.begin(), available_nodes.end());
-
-
-        //0
-        //0 1 e e 1
-        for(int i=0; i<g[0].size(); i++){
-            if(g[initial_node][i] != e && g[initial_node][i] >= 1 && (find(visited_nodes.begin(), visited_nodes.end(), i)==visited_nodes.end())){
-                available_nodes.push_back(i);
+    for(int i=0; i < g[0].size(); i++){
+        int initial_node = i;
+        vector<int> available_nodes;
+        for(int j=0; j < g[0].size(); j++) {
+            if(g[i][j] != e && g[i][j] >= 1){
+                available_nodes.push_back(j);
             }
         }
-
-        vector<vector<int>> every_road;
-
-        do {
-            vector<int> current_road;
-            for (int available_node: available_nodes) {
-                int current_node = available_node;
-                for (int i = 0; i < g[0].size(); i++) {
-                    if (g[current_node][i] != e && g[current_node][i] >= 1 &&
-                        (find(visited_nodes.begin(), visited_nodes.end(), i) == visited_nodes.end())) {
-                        available_nodes.push_back(i);
-                    }
-                }
-            }
-            every_road.push_back(current_road);
-        }while()
-
-        int closest_node_distance = e;
-        int closest_node;
-
-
-        //1 4
-        for(int possible_closest_node : available_nodes){
-            if(g[initial_node][possible_closest_node] <= closest_node_distance){
-                closest_node_distance = g[initial_node][possible_closest_node];
-                closest_node = possible_closest_node;
-
-                vector<int> discovered_road = {initial_node, possible_closest_node};
-
-                if(possible_closest_node != final_node){
-                    vector<int> future_available_nodes;
-                    for(int j=0; j<g[0].size(); j++){
-                        if(g[possible_closest_node][j] != e && g[possible_closest_node][j] >= 1 && (find(visited_nodes.begin(), visited_nodes.end(), j)==visited_nodes.end())){
-                            future_available_nodes.push_back(j);
-                        }
-                        if(!(find(future_available_nodes.begin(), future_available_nodes.end(), final_node)==future_available_nodes.end())){
-
-                        }
-                    }
-                }
-            }
-        }
-
-
-        total_distance += closest_node_distance;
-        initial_node = closest_node;
-        visited_nodes.push_back(closest_node);
-        uncharted_nodes.erase(remove(uncharted_nodes.begin(), uncharted_nodes.end(), closest_node), uncharted_nodes.end());
+        pair<int, vector<int>> connection = {initial_node, available_nodes};
+        every_node_connections.push_back(connection);
     }
+
+
+    for(auto node_connection : every_node_connections){
+         vector<pair<int, vector<int>>> buffer_connections = every_node_connections;
+         vector<int> current_path;
+         int lowest_node;
+         int total_cost = 0;
+
+         vector<int> visited_nodes;
+
+         int initial_node = node_connection.first;
+         vector<int> available_nodes = node_connection.second;
+
+         visited_nodes.push_back(initial_node);
+
+         remove(buffer_connections.begin(), buffer_connections.end(), node_connection);
+
+         current_path.push_back(initial_node);
+
+         while(!buffer_connections.empty() && !available_nodes.empty()){
+             int cost = 0;
+             for(int available_node : available_nodes){
+                 int lowest_cost = e;
+                 if(g[initial_node][available_node] < lowest_cost){
+                     lowest_cost = g[initial_node][available_node];
+                     lowest_node = available_node;
+                     cost = lowest_cost;
+                 }
+             }
+             current_path.push_back(lowest_node);
+             visited_nodes.push_back(lowest_node);
+             initial_node=lowest_node;
+             total_cost += cost;
+             available_nodes = every_node_connections[initial_node].second;
+
+             for(int visited : visited_nodes){
+                 available_nodes.erase(remove(available_nodes.begin(), available_nodes.end(), visited), available_nodes.end());
+             }
+
+             node_connection = every_node_connections[initial_node];
+             remove(buffer_connections.begin(), buffer_connections.end(), node_connection);
+         }
+
+         road_with_score new_road = {current_path, total_cost};
+         all_roads.push_back(new_road);
+    }
+
+
+    for(auto road : all_roads) {
+        cout << "Road: {";
+        for (int node: road.first) {
+            cout << node << " ";
+        }
+        cout << "}" << endl;
+        cout << "Cost:" << road.second << endl;
+    }
+
+
     return best_road;
 
 }
