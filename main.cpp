@@ -137,16 +137,17 @@ void Dijkstra(graph g, int initial_node)
     {
         int closest_node= findShortestDistance(total_distance, visited);
         visited[closest_node]=true;
-//        shortest_paths[closest_node].second.push_back(i);
 
         for(int j = 0; j < g[0].size(); j++)
         {
             if(!visited[j] && g[closest_node][j] && total_distance[closest_node] != INF && total_distance[closest_node] + g[closest_node][j] < total_distance[j]) {
                 total_distance[j] = total_distance[closest_node] + g[closest_node][j];
+
+                if((find(shortest_paths[j].second.begin(), shortest_paths[j].second.end(), closest_node) == shortest_paths[j].second.end())) {
+                    shortest_paths[j].second.push_back(closest_node);
+                }
             }
         }
-
-
     }
 
     cout << "Initial node: " << initial_node << endl;
@@ -154,12 +155,17 @@ void Dijkstra(graph g, int initial_node)
 
     for(auto path : shortest_paths)
     {
+        path.second.push_back(path.first);
+
         if(path.first == initial_node) {
             cout << "Node: " << path.first << " => Initial node" << endl;
             continue;
         }
         cout << "Node: " << path.first << " => Path: {";
         for(int node : path.second){
+            if(node==initial_node){
+                continue;
+            }
             cout << " " << node << " ";
         }
         cout << "} => Total distance: " << total_distance[path.first] << endl;
