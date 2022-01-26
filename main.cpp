@@ -2,11 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <limits>
-#include <string>
-#include <sstream>
-#include <set>
 #include <algorithm>
-#include <list>
 
 
 using namespace std;
@@ -14,7 +10,6 @@ using namespace std;
 #define INF ((int)(1 << (8 * sizeof(int) - 3)))
 
 using graph = vector<vector<int>>;
-using road_with_score = pair<vector<int>, int>;
 
 graph loadGraph(string fileName)
 {
@@ -104,115 +99,88 @@ void loadAndGenerateGraphviz(string fileName){
     generateGraph(inputGraph, output);
 }
 
-road_with_score dijkstra(graph g, int given_initial_node, int given_final_node){
+int findShortestDistance(vector<int> distance, vector<bool> visited)
+{
+    int shortest_distance=INF;
+    int closest_node;
 
-    int e = INF;
+    for(int k=0;k<distance.size();k++)
+    {
+        if(distance[k] <= shortest_distance && visited[k] == false)
+        {
+            shortest_distance=distance[k];
+            closest_node=k;
+        }
+    }
+    return closest_node;
+}
+
+void Dijkstra(graph g, int initial_node)
+{
+    vector<int> total_distance; // // array to calculate the minimum total_distance for each node
+    vector<bool> visited;// boolean array to mark visited and unvisited for each node
+
+    vector<pair<int, vector<int>>> shortest_paths;
+    vector<int> current_path;
 
 
-    vector<int> uncharted_nodes;
+    for(int k = 0; k<g[0].size(); k++)
+    {
+        total_distance.push_back(INF);
+        visited.push_back(false);
+        shortest_paths.push_back(make_pair(k, current_path));
+    }
 
-    list<road_with_score> all_roads;
-    road_with_score current_road;
-    road_with_score best_road;
+    total_distance[initial_node] = 0;
 
-    vector<pair<int, vector<int>>> every_node_connections;
+    for(int i = 0; i < g[0].size(); i++)
+    {
+        int closest_node= findShortestDistance(total_distance, visited);
+        visited[closest_node]=true;
+//        shortest_paths[closest_node].second.push_back(i);
 
-    for(int i=0; i < g[0].size(); i++){
-        int initial_node = i;
-        vector<int> available_nodes;
-        for(int j=0; j < g[0].size(); j++) {
-            if(g[i][j] != e && g[i][j] >= 1){
-                available_nodes.push_back(j);
+        for(int j = 0; j < g[0].size(); j++)
+        {
+            if(!visited[j] && g[closest_node][j] && total_distance[closest_node] != INF && total_distance[closest_node] + g[closest_node][j] < total_distance[j]) {
+                total_distance[j] = total_distance[closest_node] + g[closest_node][j];
             }
         }
-        pair<int, vector<int>> connection = {initial_node, available_nodes};
-        every_node_connections.push_back(connection);
+
+
     }
 
+    cout << "Initial node: " << initial_node << endl;
+    cout << "Shortest paths to other nodes: " << endl;
 
-    for(auto node_connection : every_node_connections){
-         vector<pair<int, vector<int>>> buffer_connections = every_node_connections;
-         vector<int> current_path;
-         int lowest_node;
-         int total_cost = 0;
-
-         vector<int> visited_nodes;
-
-         int initial_node = node_connection.first;
-         vector<int> available_nodes = node_connection.second;
-
-         visited_nodes.push_back(initial_node);
-
-         remove(buffer_connections.begin(), buffer_connections.end(), node_connection);
-
-         current_path.push_back(initial_node);
-
-         while(!buffer_connections.empty() && !available_nodes.empty()){
-             int cost = 0;
-             for(int available_node : available_nodes){
-                 int lowest_cost = e;
-                 if(g[initial_node][available_node] < lowest_cost){
-                     lowest_cost = g[initial_node][available_node];
-                     lowest_node = available_node;
-                     cost = lowest_cost;
-                 }
-             }
-             current_path.push_back(lowest_node);
-             visited_nodes.push_back(lowest_node);
-             initial_node=lowest_node;
-             total_cost += cost;
-             available_nodes = every_node_connections[initial_node].second;
-
-             for(int visited : visited_nodes){
-                 available_nodes.erase(remove(available_nodes.begin(), available_nodes.end(), visited), available_nodes.end());
-             }
-
-             node_connection = every_node_connections[initial_node];
-             remove(buffer_connections.begin(), buffer_connections.end(), node_connection);
-         }
-
-         road_with_score new_road = {current_path, total_cost};
-         all_roads.push_back(new_road);
-    }
-
-
-    for(auto road : all_roads) {
-        cout << "Road: {";
-        for (int node: road.first) {
-            cout << node << " ";
+    for(auto path : shortest_paths)
+    {
+        if(path.first == initial_node) {
+            cout << "Node: " << path.first << " => Initial node" << endl;
+            continue;
         }
-        cout << "}" << endl;
-        cout << "Cost:" << road.second << endl;
+        cout << "Node: " << path.first << " => Path: {";
+        for(int node : path.second){
+            cout << " " << node << " ";
+        }
+        cout << "} => Total distance: " << total_distance[path.first] << endl;
     }
-
-
-    return best_road;
-
 }
+
 
 
 int main(int argc, char **argv) {
 
-    int e = INF;
-
 //    loadAndGenerateGraphviz(argv[1]);
 
-    graph g = {
-            {0, 1, e, e, 1},
-            {1, 0, 3, 1, e},
-            {e, 3, 0, 1, e},
-            {e, 1, 1, 0, 1},
-            {1, e, e, 1, 0}};
+    graph g={
+            {0, 1, 2, 0, 0, 0},
+            {1, 0, 0, 5, 1, 0},
+            {2, 0, 0, 2, 3, 0},
+            {0, 5, 2, 0, 2, 2},
+            {0, 1, 3, 2, 0, 1},
+            {0, 0, 0, 2, 1, 0}};
 
-
-    road_with_score best = dijkstra(g, 1, 2);
-
-    cout << "Road: {";
-    for(int node : best.first) {
-        cout << node << " ";
-    }
-    cout << "}" << endl;
-    cout << "Cost:" << best.second;
+    Dijkstra(g, 3);
 
 
     return 0;
